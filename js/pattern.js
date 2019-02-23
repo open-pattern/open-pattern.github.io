@@ -128,17 +128,15 @@ document.addEventListener("DOMContentLoaded", function() {
   // Render loop
   function animate() {
     
-    // Rotate cube.
-    // cube.rotation.x += 0.01;
-    // cube.rotation.y -= 0.01;
-    // cube.rotation.z += 0.03;      
-
     // Move cube.
     cube.position.y += 0.1;
 
     // Update HUD graphics.
     hudBitmap.clearRect(0, 0, width, height);
-    hudBitmap.fillText("RAD [x:"+(cube.rotation.x % (2 * Math.PI)).toFixed(1)+", y:"+(cube.rotation.y % (2 * Math.PI)).toFixed(1)+", z:"+(cube.rotation.z % (2 * Math.PI)).toFixed(1)+"]" , width / 2, height / 2);
+    _x = Math.round(cube.position.x);
+    _y = Math.round(cube.position.y);
+    _z = Math.round(cube.position.z);
+    hudBitmap.fillText("[x:"+_x+", y:"+_y+", z:"+_z+"]" , width / 2, height / 2);
     hudTexture.needsUpdate = true;
     
     renderer.render(scene, camera);
