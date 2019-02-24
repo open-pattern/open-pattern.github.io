@@ -1,0 +1,35 @@
+Typologies
+
+
+Park 
+Playground
+Building Facades 
+Roads
+Sidewalks
+
+
+
+
+
+<Park>
+- Trees
+- Sidewalks 
+- Sections
+- Benches
+
+<Playground>
+- Grass
+- Swings
+- Sandboxes
+- Fun-Slide-Things
+
+<Building Facade>
+- Levels
+- Openings
+- Material
+- Signs
+
+
+<Roads>
+- Pavers
+- Cars?
