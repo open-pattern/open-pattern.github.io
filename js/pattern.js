@@ -1,32 +1,95 @@
 // import { CubeReflectionMapping } from "./three";
 
-// Add a rectangle with a position & dimensions to a scene & return the mesh object.
-function addBox(scene, position, dims){
-  var geometry = new THREE.BoxGeometry( dims.x, dims.y , dims.z );
-  var material = new THREE.MeshBasicMaterial( {color: 0xcccccc} ); // Fixed color for now
-  var cube = new THREE.Mesh( geometry, material );
-  cube.position.x = position.x 
-  cube.position.y = position.y 
-  cube.position.z = position.z
-  scene.add( cube );
-
-  return cube;
-}
-
 // This is where
 var scene, camera;
 var hoverObject; 
 
+function addLine(scene, v1, v2){
+  
+  var geometry = new THREE.Geometry();
+  geometry.vertices.push(v1);
+  geometry.vertices.push(v2);
+
+  var line = new MeshLine();
+  line.setGeometry( geometry, function( p ) { return 2; }); // makes width 2 * lineWidth
+
+  var material = new MeshLineMaterial({ color:new THREE.Color(50.5,0,0) });
+  var line = new THREE.Mesh( line.geometry , material );
+  scene.add( line );
+  return line;
+}
+
+
+// Add a rectangle with a position & dimensions to a scene & return the mesh object.
+function addBox(scene, position, dims){
+  let _x = position.x; let _y = position.y; let _z = position.z;
+  let e = 0.2; // Render occlusion
+  var geometry = new THREE.BoxGeometry( dims.x - e, dims.y - e , dims.z - e);
+
+  var fill = new THREE.MeshBasicMaterial( {color: 0xcccccc} ); // Fixed color for now
+
+	var base = new THREE.Mesh( geometry, fill );
+  base.position.set(_x - e + dims.x / 2,_y - e  + dims.y / 2,_z - e + dims.z / 2);
+	scene.add( base );	
+
+  dims.x = Math.round(dims.x);
+  dims.y = Math.round(dims.y);
+  dims.z = Math.round(dims.z);
+
+  var v1 = new THREE.Vector3( _x + dims.x, _y         , _z);
+  var v2 = new THREE.Vector3( _x + dims.x, _y + dims.y, _z); 
+  var v3 = new THREE.Vector3( _x + dims.x, _y         , _z + dims.z); 
+  var v4 = new THREE.Vector3( _x + dims.x, _y + dims.y, _z + dims.z); 
+  var v5 = new THREE.Vector3( _x         , _y + dims.y, _z); 
+  var v6 = new THREE.Vector3( _x         , _y         , _z + dims.z);
+  var v7 = new THREE.Vector3( _x         , _y + dims.y, _z + dims.z);
+
+  addLine(scene,v1,v2);
+  addLine(scene,v2,v5);
+  addLine(scene,v1,v3);
+  addLine(scene,v3,v4);
+  addLine(scene,v2,v4);
+  addLine(scene,v4,v7);
+  addLine(scene,v3,v6);
+  addLine(scene,v6,v7);
+  addLine(scene,v7,v5);
+
+  return base;
+}
+
+function addLines(scene){
+  let numBlocks = 4;
+  let variation = 25;
+  let base_size = 30;
+  let px = 0; let py = 0; let pz = 0;
+  let bx = base_size; let by = base_size; let bz = base_size;
+  
+  var boxes = [];
+  
+  for (var i = 0; i < numBlocks; i++){
+    let dx = bx + Math.random() * variation;
+    let dy = by + Math.random() * variation;
+    let dz = bz + Math.random() * variation;
+
+    boxes.push(addBox(scene,{x: px, y: py, z: pz},{x: dx, y: dy, z: dz}));
+    px += dx;
+  }
+  
+  return boxes;
+}
+
+
 // This is where our hover effects come in.
 function onDocumentMouseMove( event ) 
 {
-    var mouse = new THREE.Vector2();
-    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+  var mouse = new THREE.Vector2();
+  mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+  mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
-    var raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera( mouse, camera );
-    var intersects = raycaster.intersectObjects( scene.children );
+  var raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera( mouse, camera );
+    if ( boxes ){
+    var intersects = raycaster.intersectObjects( boxes );
 
     if(intersects.length > 0) {
       if (intersects[0].object != hoverObject){
@@ -43,6 +106,7 @@ function onDocumentMouseMove( event )
         hoverObject = undefined;
       }
     }
+  }
 }
 
 
@@ -64,12 +128,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // Create camera and move it a bit further. Make it to look to origin.
 
-  camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, 1, 1000 );
+  // camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, 1, 400 );
   // scene.add( camera );
-  // var camera = new THREE.PerspectiveCamera( 45, width / height, 1, 500 );
-  camera.position.y = 100;
-  camera.position.z = 100;
-  camera.position.x = 100;
+  camera = new THREE.PerspectiveCamera( 45, width / height, 1, 500 );
+  camera.position.set( 200, 200, 200 );
+  camera.lookAt( 0, 0, 0 );
   camera.lookAt(scene.position);
 
   // Create renderer.
@@ -84,8 +147,10 @@ document.addEventListener("DOMContentLoaded", function() {
   // scene.add(light);
 
   // And the box.
-  _size = 50
-  cube = addBox(scene,{x:0, y:0, z:0},{x:_size, y: _size, z:_size});
+  boxes = addLines(scene);
+  console.log(boxes)
+  cube = boxes[0];
+  // cube = addBox(scene,{x:0, y:0, z:0},{x:_size, y: _size, z:_size});
 
 
   // HUD CONTEXT 
@@ -129,14 +194,14 @@ document.addEventListener("DOMContentLoaded", function() {
   function animate() {
     
     // Move cube.
-    cube.position.y += 0.1;
+    // cube.position.y += 0.1;
 
     // Update HUD graphics.
     hudBitmap.clearRect(0, 0, width, height);
-    _x = Math.round(cube.position.x);
-    _y = Math.round(cube.position.y);
-    _z = Math.round(cube.position.z);
-    hudBitmap.fillText("[x:"+_x+", y:"+_y+", z:"+_z+"]" , width / 2, height / 2);
+    let _x = Math.round(cube.position.x);
+    let _y = Math.round(cube.position.y);
+    let _z = Math.round(cube.position.z);
+    hudBitmap.fillText("[x:"+_x+", y:"+_y+", z:"+_z+"]" , width / 2, 7 * height / 8 );
     hudTexture.needsUpdate = true;
     
     renderer.render(scene, camera);
